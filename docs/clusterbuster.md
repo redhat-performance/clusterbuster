@@ -4,11 +4,12 @@ Clusterbuster is (yet another) tool for running workloads on OpenShift
 clusters.  Its purpose is to simplify running workloads from the
 command line and does not require external resources such as
 Elasticsearch to operate.  This is written by [Robert
-Krawitz](mailto:rlk@redhat.com) and is part of my OpenShift tools
-package.  The main package is written in bash.
+Krawitz](mailto:rlk@redhat.com).  The main package is written in bash;
+reporting and actual workloads are written in Python.
 
 It is also intended to be fairly straightforward to add new workloads
-as plugins.  Yes, it is possible to have a plugin architecture with bash!
+as plugins.  Yes, it is possible to implement a plugin architecture
+with bash!
 
 <!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc-generate-toc again -->
 **Table of Contents**
@@ -78,12 +79,12 @@ Clusterbuster supports extensible workloads.  At present, it supports
 uperf, fio, many small files, CPU/startup test, and a number of others.
 
 A workload requires, at a minimum, a workload definition in
-`lib/clusterbuster/workloads`.  This is a set of bash functions that
+`lib/workloads`.  This is a set of bash functions that
 tell clusterbuster how to deploy the workload.
 
 Most workloads require in addition a component to run on the worker
 nodes.  These are written in python.  The node components, which
-reside in `lib/clusterbuster/pod_files`, are responsible for
+reside in `lib/pod_files`, are responsible for
 initializing and running the workloads.  For most workloads, an
 additional synchronization/control service is used to ensure that all
 instances of the workload start simultaneously; the sync service also
@@ -149,7 +150,7 @@ The following APIs are supported:
 
   Return a list of files that must be provided to the worker object
   for the workload to run.  This consists of files in
-  `lib/clusterbuster/pod_files` that are required to run the workload.
+  `lib/pod_files` that are required to run the workload.
   This is only needed if files other than `<workload>.py` are required.
 
 * `<workload>_list_user_configmaps`
@@ -171,7 +172,7 @@ The following APIs are supported:
   calls back to `create_standard_deployment`.  It may make other
   calls; if this workload needs only a standard deployment, it is not
   necessary to implement this.  See and `uperf.workload` in
-  `lib/clusterbuster/workloads` for examples of the callbacks that it
+  `lib/workloads` for examples of the callbacks that it
   may make.
 
 * `<workload>_arglist  namespace instance secret_count replicas containers_per_pod`
@@ -237,7 +238,7 @@ The following APIs are supported:
 #### Workload Client (Pod) API
 
 The Python3 API for workload pods is provided by
-`lib/clusterbuster/pod_files/clusterbuster_pod_client.py`.  All
+`lib/pod_files/clusterbuster_pod_client.py`.  All
 workloads should subclass this API.  The API is subject to change.
 All workloads should implement a subclass of
 `clusterbuster_pod_client` and invoke the `run_workload()` method of
@@ -291,10 +292,10 @@ itself; only subclasses should be instantiated.
 ##### Running Workloads
 
 The `run_workload` method will call back to the `runit` method of the
-subclass, passing one argument, the process number.  The
-`run_workload` method will be invoked in parallel the number of times
-specified by the `_set_processes()` method described below, each in a
-separate subprocess.
+subclass, passing one argument, the process index number starting from
+zero (not the process ID).  The `run_workload` method will be invoked
+in parallel the number of times specified by the `_set_processes()`
+method described below, each in a separate subprocess.
 
 The `runit` method should call `self._report_results` (described
 below) to report the results back.  This method does not return.  If
@@ -475,17 +476,16 @@ This currently only documents the most commonly used members.
   if an empty string is passed; `re.split()` returns a list of a
   single element.
 
-
 #### Create A Workload
 
 To create a new workload, you need to do the following:
 
 1. Create a `.workload` file and place it in
-   `lib/clusterbuster/workloads`.  The workload file is a set of bash
+   `lib/workloads`.  The workload file is a set of bash
    functions, as the file is sourced by clusterbuster.
 
 2. (Optional) Create one or more workloads, which go into
-   `lib/clusterbuster/pod_files`.  These are the actual workloads, or
+   `lib/pod_files`.  These are the actual workloads, or
    scripts that run them.  These are written in Python and are
    subclasses of `clusterbuster_pod_client`.
 
@@ -511,18 +511,19 @@ To create a new workload, you need to do the following:
 
 ### Create A Deployment Type
 
-Clusterbuster currently supports running workloads as pods,
-ReplicaSets, Deployments, or VMs (with very minimal differences
-between the latter two).  At present, the object types are hard-coded
-into Clusterbuster; at some point I intend to refactor those.
+Clusterbuster currently supports running workloads as pods, VMs,
+ReplicaSets, or Deployments (with very minimal differences between the
+latter two).  At present, the object types are hard-coded into
+Clusterbuster; at some point I intend to refactor those.
 
 All of the object types are created from `create_standard_deployment`,
 which dispatches to the appropriate object creation based on the value
 of `deployment_type` (currently either `create_pod_deployment` or
 `create_replication_deployment`).  Both of these create similar
 specifications using `create_spec`; other types of objects will
-probably be quite similar.  However, VMs will likely be rather
-different and may need more customization of the code.
+probably be quite similar.  VMs have required significant code
+differences; any other deployment types created will likely require
+significant amounts of changed code.
 
 ## Bring Your Own Workload
 

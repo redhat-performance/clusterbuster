@@ -302,7 +302,7 @@ if [[ -z "$OC" || ! -x "$OC" ]] ; then
     fatal "Can't find kubectl or oc"
 fi
 
-declare __libdir__=${__topdir__}/lib/clusterbuster
+declare __libdir__=${__topdir__}/lib
 export CB_LIBPATH=${CB_LIBPATH:-$__libdir__}
 
 [[ -d "$__libdir__" ]] || fatal "Can't find my library dir!"
@@ -2000,7 +2000,7 @@ function _extract_metrics() {
 	sleep 60
 	report_if_desired "Retrieving system metrics data" 1>&2
 	cat <<EOF
-"metrics": $("${__topdir__}/prom-extract" --indent= --define "namespace_re=${basename}-.*" -m "$metrics_file" -s "$metrics_interval" --metrics-only --start_time="$((prometheus_starting_timestamp - metrics_epoch))" --post-settling-time="$((metrics_epoch*2))"),
+"metrics": $("${__libdir__}/lib/prom-extract" --indent= --define "namespace_re=${basename}-.*" -m "$metrics_file" -s "$metrics_interval" --metrics-only --start_time="$((prometheus_starting_timestamp - metrics_epoch))" --post-settling-time="$((metrics_epoch*2))"),
 EOF
     fi
 }

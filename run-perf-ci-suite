@@ -29,10 +29,10 @@ declare OC=${OC:-${KUBECTL:-}}
 OC=${OC:-$(type -p oc)}
 OC=${OC:-$(type -p kubectl)}	# kubectl might not work, though...
 declare __topdir__
-__topdir__="$(realpath "$(dirname "$(realpath -e "$0")")/..")"
-declare __libdir__="${__topdir__}/lib/clusterbuster"
+__topdir__="$(realpath "$(dirname "$(realpath -e "$0")")")"
+declare __libdir__="${__topdir__}/lib"
 declare __clusterbuster__="${__topdir__}/clusterbuster"
-declare __force_pull_clusterbuster_image__="${__topdir__}/force-pull-clusterbuster-image"
+declare __force_pull_clusterbuster_image__="${__libdir__}/force-pull-clusterbuster-image"
 declare __analyze__="${__topdir__}/analyze-clusterbuster-report"
 declare __profiledir__="${__libdir__}/CI/profiles"
 declare __workloaddir__="${__libdir__}/CI/workloads"
