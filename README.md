@@ -1,6 +1,4 @@
-# ClusterBuster: Run workloads on
-[OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift)
-clusters
+# ClusterBuster: Run workloads on [OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift) clusters from the command line
 
 ClusterBuster is a command line tool to run a variety of workloads on
 OpenShift 4 clusters.  It was created with the following goals in
