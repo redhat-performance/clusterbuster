@@ -1,9 +1,9 @@
 # ClusterBuster
 
-Clusterbuster is (yet another) tool for running workloads on OpenShift
+ClusterBuster is (yet another) tool for running workloads on OpenShift
 clusters.  Its purpose is to simplify running workloads from the
 command line and does not require external resources such as
-Elasticsearch to operate.  This is written by [Robert
+Elasticsearch to operate.  This was written by [Robert
 Krawitz](mailto:rlk@redhat.com).  The main package is written in bash;
 reporting and actual workloads are written in Python.
 
@@ -16,7 +16,7 @@ with bash!
 
 - [ClusterBuster](#clusterbuster)
     - [Introduction](#introduction)
-    - [Running Clusterbuster](#running-clusterbuster)
+    - [Running ClusterBuster](#running-clusterbuster)
     - [Internals](#internals)
         - [Architecture](#architecture)
         - [Workloads](#workloads)
@@ -25,21 +25,22 @@ with bash!
                 - [Public Members](#public-members)
                 - [Running Workloads](#running-workloads)
                 - [Protected Members](#protected-members)
-                - [Static methods:](#static-methods)
             - [Create A Workload](#create-a-workload)
+        - [CI Workflows](#ci-workflows)
         - [Create A Deployment Type](#create-a-deployment-type)
+    - [Bring Your Own Workload](#bring-your-own-workload)
 
 <!-- markdown-toc end -->
 
 ## Introduction
 
-I started writing Clusterbuster in 2019 to simplify the process of
+I started writing ClusterBuster in 2019 to simplify the process of
 running scalable workloads as part of [testing to 500 pods per
 node](https://cloud.redhat.com/blog/500_pods_per_node).  Since then,
 it has gained new capabilities at a steady pace, and is now able to
 run a variety of different workloads.
 
-Clusterbuster monitors workloads that are running, and for most
+ClusterBuster monitors workloads that are running, and for most
 workloads, will retrieve reporting data from them.  It can optionally
 monitor metrics from Prometheus during a run and also take a snapshot
 of the actual Prometheus database.  A snapshot contains the raw
@@ -50,13 +51,13 @@ locally; if you want to upload them to an Elasticsearch instance or
 other external location, you'll currently need to make your own
 arrangements.
 
-## Running Clusterbuster
+## Running ClusterBuster
 
 In the normal way of Linux utilities, running `clusterbuster -h`
 prints a help message.  The help message is quite long, as there are a
 lot of options available, but the best way of learning how to use it
 is to look at one of the example files located in
-`examples/clusterbuster`.  If you have access to an OpenShift cluster
+`examples`.  If you have access to an OpenShift cluster
 with admin privileges (since it needs to create namespaces and do a
 few other privileged things) Any of those files can be used via
 
@@ -67,7 +68,7 @@ clusterbuster -f <file>
 ## Internals
 
 This section describes the architecture and internal interfaces of
-Clusterbuster.
+ClusterBuster.
 
 ### Architecture
 
@@ -75,7 +76,7 @@ Todo
 
 ### Workloads
 
-Clusterbuster supports extensible workloads.  At present, it supports
+ClusterBuster supports extensible workloads.  At present, it supports
 uperf, fio, many small files, CPU/startup test, and a number of others.
 
 A workload requires, at a minimum, a workload definition in
@@ -95,7 +96,7 @@ performing analysis of the data.  These are written in Python.
 
 #### Workload Host API
 
-Clusterbuster has an API to interface between the tool and workloads.
+ClusterBuster has an API to interface between the tool and workloads.
 Workloads are responsible for providing functions implementing these
 workloads.  The workload files are all sourced when clusterbuster
 starts.  All workload files must include a callback to clusterbuster
@@ -163,7 +164,7 @@ The following APIs are supported:
 
   Calculate how many entities are expected to provide log files and
   print that to stdout.  This is not normally necessary to provide,
-  as Clusterbuster will calculate it based on workload parameters.
+  as ClusterBuster will calculate it based on workload parameters.
 
 * `<workload>_create_deployment  namespace instance secret_count replicas containers_per_pod`
 
@@ -480,16 +481,22 @@ This currently only documents the most commonly used members.
 
 To create a new workload, you need to do the following:
 
-1. Create a `.workload` file and place it in
-   `lib/workloads`.  The workload file is a set of bash
-   functions, as the file is sourced by clusterbuster.
+1. (Optional) Create a directory into which you want to place your
+   workload.  This directory should contain subdirectories name
+   `workloads` and `pod_files` and should be added to the `CB_LIBPATH`
+   environment variable.
 
-2. (Optional) Create one or more workloads, which go into
+2. Create a `.workload` file and place it in `lib/workloads` (or the
+   `workloads` subdirectory of a member of `CB_LIBPATH`).  The
+   workload file is a set of bash functions, as the file is sourced by
+   clusterbuster.
+
+3. (Optional) Create one or more workloads, which go into
    `lib/pod_files`.  These are the actual workloads, or
    scripts that run them.  These are written in Python and are
    subclasses of `clusterbuster_pod_client`.
 
-3. (Optional) Create Python scripts to generate reports.  If you don't
+4. (Optional) Create Python scripts to generate reports.  If you don't
    do this and attempt to generate a report, you'll get only a generic
    report which won't have any workload-specific information.  You can
    create any of the following scripts, but each type of script
@@ -507,14 +514,52 @@ To create a new workload, you need to do the following:
    3. *analysis*: analysis scripts transform the loaded data into a
       form suitable for downstream consumption, be it by humans,
       databases, or spreadsheets.  There are several types of analysis
-      scripts, and more may be added in the future.  That's Todo.
+      scripts, and more may be added in the future.
+
+### CI Workflows
+
+ClusterBuster can be used as part of a CI workflow.  In addition to
+individual workloads, ClusterBuster can run multiple workloads and
+generate a combined report with the `run-perf-ci-suite`.  This was
+created to support
+[benchmark-runner](https://github.com/redhat-performance/benchmark-runner)
+but may of course be used for other purposes.
+
+The perf CI suite runs workloads in a loop with different test
+configurations, and uses profiles to specify defaults. The CI suite
+workloads, located in `lib/CI/workloads`, specify how the workloads
+should be run and contain code to run the workloads in the appropriate
+loop.  The profiles contain default arguments for the run in addition
+to for the individual workloads, enabling tailoring a run for the
+desired tradeoff between thoroughness and runtime.
+
+Entries in profiles are of the form `<name><:conditions>=<value>` where
+the `name` and `value` are either ClusterBuster arguments or CI suite
+arguments. Conditions are optional. For ClusterBuster arguments, the conditions can specify
+which workloads and runtime types they apply to. Conditions are of the
+form `<workload>:<runtime>` where both workload and runtime may be
+singletons, comma-separated lists, or negations. For example, this
+entry:
+
+```
+volume:files,fio:!vm=:emptydir:/var/opt/clusterbuster
+```
+indicates that the `volume` argument
+`:emptydir:/var/opt/clusterbuster` should be used when running the
+`files` or `fio` workloads and when the runtime (pod, VM, or Kata) is
+not `VM`.
+
+Detailed descriptions of arguments may be obtained by running
+```
+run-perf-ci-suite --help
+```
 
 ### Create A Deployment Type
 
-Clusterbuster currently supports running workloads as pods, VMs,
+ClusterBuster currently supports running workloads as pods, VMs,
 ReplicaSets, or Deployments (with very minimal differences between the
 latter two).  At present, the object types are hard-coded into
-Clusterbuster; at some point I intend to refactor those.
+ClusterBuster.
 
 All of the object types are created from `create_standard_deployment`,
 which dispatches to the appropriate object creation based on the value
@@ -529,7 +574,7 @@ significant amounts of changed code.
 
 It is possible (although at present somewhat complicated) to use your
 own workload without writing a full Python wrapper for it, by means of
-the `byo` workload.  The Clusterbuster arguments are described in the
+the `byo` workload.  The ClusterBuster arguments are described in the
 help message.
 
 The workload command needs to accept an argument `--setup` as the
@@ -542,7 +587,7 @@ specified by `--byo-workload` or a default location if not specified.
 The working directory is writable.
 
 The command should produce valid JSON (or empty output) on its stdout,
-which is incorporated into the report generated by Clusterbuster.  All
+which is incorporated into the report generated by ClusterBuster.  All
 other output should be to stderr.
 
 There are two commands that can be used from the workload:
@@ -555,7 +600,7 @@ There are two commands that can be used from the workload:
 
 * `drop-cache` may be used to drop the buffer cache, but can only
   usefully be used if `--byo-drop-cache=1` is used on the
-  Clusterbuster command line.  If you do use this, it is suggested
+  ClusterBuster command line.  If you do use this, it is suggested
   that you call `do-sync` following `drop-cache`, but it is not
   mandatory.
 
@@ -570,4 +615,4 @@ process ID) of the process for multiple processes in a container, and
 identifier in JSON output.
 
 An example workload command is located in
-`examples/clusterbuster/byo/cpusoaker-byo.sh`.
+`examples/byo/cpusoaker-byo.sh`.

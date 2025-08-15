@@ -53,6 +53,8 @@ ClusterBuster currently supports the following workloads:
   testing storage performance.  This is not a fully general front end
   to fio; it supports basic I/O patterns.
 
+- *logger* -- generate log messages.
+
 - *memory* -- allocate, free, and optionally use large chunks of
   memory.
 
@@ -63,12 +65,17 @@ ClusterBuster currently supports the following workloads:
 
 - *uperf* -- a [network performance tool](https://uperf.org/) front end.
 
-In addition, these "dummy" workloads are available:
+In addition, these special purpose workloads are available:
 
 - *byo* -- run a workload of your choice under ClusterBuster.
 
 - *failure* -- run pods that deliberately fail. Intended for testing
   ClusterBuster itself.
+
+- *pausepod* -- run a minimal pause pod that sleeps forever
+  and cannot be used for other purposes.
+
+- *sleep* -- sleep for configured interval
 
 - *waitforever* -- dummy test, runs a workload that waits forever.
   This can be used to create pods or VMs that persist as

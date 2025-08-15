@@ -1,4 +1,4 @@
-# Clusterbuster performance CI profile
+# ClusterBuster performance CI profile
 
 force-pull=1
 

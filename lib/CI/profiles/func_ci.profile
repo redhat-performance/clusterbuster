@@ -1,4 +1,4 @@
-# Clusterbuster functional CI profile
+# ClusterBuster functional CI profile
 
 force-pull=1
 

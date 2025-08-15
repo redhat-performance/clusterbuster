@@ -1,4 +1,4 @@
-# Clusterbuster release CI profile
+# ClusterBuster release CI profile
 
 force-pull=1
 

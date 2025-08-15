@@ -492,7 +492,7 @@ except Exception as exc:
 
 start_time = time.time()
 base_start_time = start_time
-timebase._timestamp("Clusterbuster sync starting")
+timebase._timestamp("ClusterBuster sync starting")
 sock = timebase._get_port(addr=None, port=listen_port)
 if sync_file:
     tmp_sync_file_base = f'{sync_file}-tmp'

@@ -319,7 +319,7 @@ function _helpmsg() {
     local opt
     (IFS=$'\n'; echo "$*"; if [[ -n "$*" ]] ; then echo; fi)
 cat <<EOF
-Clusterbuster is a tool to permit you to load a configurable workload
+ClusterBuster is a tool to permit you to load a configurable workload
 onto an OpenShift cluster.  ClusterBuster focuses primarily on workload
 scalability, including synchronization of multi-instance workloads.
 
@@ -4814,7 +4814,7 @@ function run_clusterbuster_1() {
 	fi
 
 	if ((status)) ; then
-	    fatal -w "Clusterbuster failed!"
+	    fatal -w "ClusterBuster failed!"
 	else
 	    if [[ $take_prometheus_snapshot -gt 0 && -n "$artifactdir" ]] ; then
 		retrieve_prometheus_snapshot "$artifactdir"

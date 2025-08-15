@@ -517,7 +517,7 @@ $(list_profiles '                                - ')
     Workload-specific options:
 $(_help_options_workloads)
 
-  Clusterbuster options:
+  ClusterBuster options:
 $("$__clusterbuster__" --help-options)
 
 EOF

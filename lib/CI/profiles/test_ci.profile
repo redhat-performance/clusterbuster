@@ -1,4 +1,4 @@
-# Clusterbuster smoke test profile
+# ClusterBuster smoke test profile
 
 force-pull=1
 
