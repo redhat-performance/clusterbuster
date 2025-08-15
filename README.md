@@ -42,28 +42,37 @@ simultaneously.
 
 ClusterBuster currently supports the following workloads:
 
+- *cpusoaker* -- a simple loop in Python that can be used either as a
+  very rough measure of CPU performance or a load generator.
+
+- *files* -- create, read, and delete large numbers of files to stress
+  filesystem handling.
+
 - *fio* -- the [Flexible I/O
   tester](https://fio.readthedocs.io/en/latest/fio_doc.html) for
   testing storage performance.  This is not a fully general front end
   to fio; it supports basic I/O patterns.
 
-- *uperf* -- a [network performance tool](https://uperf.org/) front end.
+- *memory* -- allocate, free, and optionally use large chunks of
+  memory.
+
+- *server* -- client-server message exchange.
 
 - *sysbench* -- a [multi-threaded system stress/benchmark
   tool](https://github.com/akopytov/sysbench).
 
-- *cpusoaker* -- a simple loop in Python that can be used either as a
-  very rough measure of CPU performance or a load generator.
+- *uperf* -- a [network performance tool](https://uperf.org/) front end.
 
-- *memory* -- allocate, free, and optionally use large chunks of
-  memory.
-
-- *files* -- create, read, and delete large numbers of files to stress
-  filesystem handling.
-
-- *server* -- client-server message exchange.
+In addition, these "dummy" workloads are available:
 
 - *byo* -- run a workload of your choice under ClusterBuster.
+
+- *failure* -- run pods that deliberately fail. Intended for testing
+  ClusterBuster itself.
+
+- *waitforever* -- dummy test, runs a workload that waits forever.
+  This can be used to create pods or VMs that persist as
+  infrastructure for running non-ClusterBuster workloads.
 
 All supported workloads are under the [lib/workloads](lib/workloads)
 directory.

@@ -15,32 +15,31 @@
 # limitations under the License.
 
 ################################################################
-# Simple workloads (pause pod, clusterbuster, logging)
+# Sleep for desired time interval
 ################################################################
 
-function classic_arglist() {
+function sleep_arglist() {
     local mountdir=$1; shift
     while [[ "$1" != '--' ]] ; do shift; done; shift
-    mk_yaml_args "python3" "${mountdir}classic.py" "$@" "${workload_run_time:-10}" "$processes_per_pod"
+    mk_yaml_args "python3" "${mountdir}sleep.py" "$@" "${workload_run_time:-10}" "$processes_per_pod"
 }
 
-function classic_document() {
+function sleep_document() {
     cat <<'EOF'
-* classic: a simple pod based on busybox that logs the date
-  once per minute.  Useful for testing the control plane.
+* sleep: sleep for an interval specified by the workload runtime
 EOF
 }
 
-function classic_supports_reporting() {
+function sleep_supports_reporting() {
     false
 }
 
-function classic_workload_reporting_class() {
+function sleep_workload_reporting_class() {
     echo generic
 }
 
-function classic_calculate_logs_required() {
+function sleep_calculate_logs_required() {
     echo 0
 }
 
-register_workload classic clusterbuster
+register_workload sleep clusterbuster

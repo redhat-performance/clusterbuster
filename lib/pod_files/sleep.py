@@ -5,9 +5,9 @@ import time
 from clusterbuster_pod_client import clusterbuster_pod_client
 
 
-class classic_client(clusterbuster_pod_client):
+class sleep_client(clusterbuster_pod_client):
     """
-    Classic test for clusterbuster
+    Sleep test for clusterbuster
     """
 
     def __init__(self):
@@ -32,4 +32,4 @@ class classic_client(clusterbuster_pod_client):
         self._report_results(data_start_time, data_end_time, data_end_time - data_start_time, user, sys)
 
 
-classic_client().run_workload()
+sleep_client().run_workload()

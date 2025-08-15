@@ -9,5 +9,5 @@ deployment_type=vm
 requests=memory=2Gi
 vmcores=2
 namespaces=1
-workload=classic
+workload=sleep
 exit_at_end

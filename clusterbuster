@@ -568,7 +568,7 @@ $(print_workloads_supporting_reporting '                        - ')
     Pod Options:
        --container_image=<image>
                         Image to use (default $container_image).
-                        Does not apply to "classic" or "pause" workloads.
+                        Does not apply to "pause" workloads.
        --deployment_type=<pod,deployment,replicaset,vm>
                         Deploy via individual pods, deployments, replica sets,
                         or vms (default $deployment_type).
