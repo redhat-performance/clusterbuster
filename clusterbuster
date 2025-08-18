@@ -4253,6 +4253,8 @@ $(indent 2 standard_environment)
   - "$sync_service"
   - "$sync_port_num"
   - "$sync_ns_port"
+  - "$sync_watchdog_port_num"
+  - "$sync_watchdog_timeout"
   - "none"
   - "$drop_cache_port"
 $(indent 2 volume_mounts_yaml -V "$namespace" 0 0)
