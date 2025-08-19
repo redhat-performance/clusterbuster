@@ -34,10 +34,13 @@ parser.add_argument("--kata", action='store_true', help='Compare results for sta
 parser.add_argument("-r", "--report-type", "--report_type", default=None, type=str, metavar='format',
                     choices=analysis_formats, help=f'Analysis format: one of {", ".join(analysis_formats)}')
 parser.add_argument("-w", "--workload", type=str, help='Workloads to process', action='append')
-parser.add_argument("files", metavar='file', type=str, nargs='+', help='Files to process')
+parser.add_argument("files", metavar='file', type=str, nargs='*', help='Files to process')
 args, extras = parser.parse_known_args()
 if args.list_formats:
     print('\n'.join(sorted(analysis_formats)))
+    sys.exit()
+elif not args.files:
+    print("Error: at least one file or directory must be specified");
     sys.exit(1)
 
 
