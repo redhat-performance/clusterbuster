@@ -38,6 +38,8 @@ ClusterBuster arranges for orchestration of workloads and
 synchronization between all pods/VMs so that all benchmark steps start
 simultaneously.
 
+At present, running on Kubernetes is not supported.
+
 ## Supported Workloads
 
 ClusterBuster currently supports the following workloads:
