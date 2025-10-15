@@ -29,6 +29,7 @@ function standard_snapshot_date_format() {
     echo '%Y_%m_%dT%H_%M_%S%z'
 }
 
+# shellcheck disable=SC2120
 function timestamp() {
     function _timestamp() {
 	while IFS= read -r 'LINE' ; do
@@ -56,18 +57,17 @@ function register_debug_condition() {
     warn "*** Registering debug condition '$condition' = '${debug_conditions[$condition]}'"
 }
 
-function test_debug() {
-    local condition=${1:-}
-    [[ -n "$condition" && (-n "${debug_conditions[$condition]:-}" || -n "${debug_conditions[all]:-}") ]]
-}
-
 function debug() {
-    local condition=${1:-}
+    local conditions=${1//,/ }
+    local condition
     shift
-    if test_debug "$condition" ; then
-	echo "*** DEBUG $condition:" "${@@Q}" |timestamp 1>&2
-    fi
-    return 0
+    for condition in "${conditions[@]}" ; do
+	if [[ -n "$condition" && (-n "${debug_conditions[$condition]:-}" || -n "${debug_conditions[all]:-}") ]] ; then
+	    # shellcheck disable=SC2119
+	    echo "*** DEBUG $condition:" "${@@Q}" |timestamp 1>&2
+	    return 0
+	fi
+    done
 }
 
 function bool() {

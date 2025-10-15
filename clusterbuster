@@ -280,6 +280,7 @@ OC=${OC:-$(type -p kubectl)}	# kubectl might not work, though...
 OC=$(type -p "$OC")
 
 declare __virtctl_local_ssh=UNKNOWN
+declare -i __virtctl_use_type_and_name=0
 declare VIRTCTL=${VIRTCTL:-$(type -p virtctl)}
 
 function fatal() {
@@ -1278,6 +1279,11 @@ function _____OC() {
 # There's no obvious "clean" way to determine what's needed.  According to the
 # virtctl change log, this was introduced around 0.56, but Fedora 38 has
 # 0.58.1 and does not accept this option.
+#
+# As of virtctl 1.6, virtctls require specifying the remote as
+# [user@]vm/[vm].[namespace]:[file].  Again, it's not clear how to determine that
+# except for parsing the help message.  This appears to have been introduced in
+# PR #13918, #13938, and #13939.
 function _VIRTCTL_BASE() {
     local subcmd=${1:-}
     shift
@@ -1288,8 +1294,24 @@ function _VIRTCTL_BASE() {
 	    else
 		__virtctl_local_ssh=
 	    fi
+	    if virtctl ssh --help < /dev/null 2>&1 |grep -q -e '@vmi?/testvm' ; then
+		__virtctl_use_type_and_name=1
+	    fi
 	fi
-	"$VIRTCTL" "$subcmd" ${__virtctl_local_ssh:+"$__virtctl_local_ssh"} "$@"
+	local -a args=()
+	local arg
+	for arg in "$@" ; do
+	    if ((__virtctl_use_type_and_name)) && [[ $arg =~ ([-_[:alnum:]]+@)?([-[:alnum:]]+)\.([-[:alnum:]]+):(.*) ]] ; then
+		local user=${BASH_REMATCH[1]}
+		local name=${BASH_REMATCH[2]}
+		local namespace=${BASH_REMATCH[3]}
+		local file=${BASH_REMATCH[4]}
+		args+=("${user}vm/${name}/${namespace}:${file}")
+	    else
+		args+=("$arg")
+	    fi
+	done
+	"$VIRTCTL" "$subcmd" ${__virtctl_local_ssh:+"$__virtctl_local_ssh"} "${args[@]}"
     else
 	"$VIRTCTL" "$subcmd" "$@"
     fi
@@ -1297,7 +1319,7 @@ function _VIRTCTL_BASE() {
 
 function __VIRTCTL() {
     if ((doit)) ; then
-	debug kubectl "$VIRTCTL" "$@"
+	debug virtctl,kubectl "$VIRTCTL" "$@"
 	_VIRTCTL_BASE "$@"
     else
 	echo '(skipped)' "$VIRTCTL" "${@@Q}" 1>&2
@@ -1305,24 +1327,24 @@ function __VIRTCTL() {
 }
 
 function _VIRTCTL() {
-    debug kubectl "$VIRTCTL" "$@"
+    debug virtctl,kubectl "$VIRTCTL" "$@"
     __VIRTCTL "$@" || fatal "__KUBEFAIL__ $VIRTCTL $* failed!"
 }
 
 function ___VIRTCTL() {
-    debug kubectl "$VIRTCTL" "$@"
+    debug virtctl,kubectl "$VIRTCTL" "$@"
     __VIRTCTL "$@" || fatal "$VIRTCTL $* failed!"
 }
 
 function ____VIRTCTL() {
-    debug kubectl "$VIRTCTL" "$@"
+    debug kubectl,virtctl "$VIRTCTL" "$@"
     _VIRTCTL_BASE "$@"
 }
 
 function _____VIRTCTL() {
     # When the oc/kubectl command must run in the same process
     # as the caller.
-    debug kubectl "$VIRTCTL" "$@"
+    debug virtctl,kubectl "$VIRTCTL" "$@"
     exec "$VIRTCTL" "$@"
 }
 
@@ -2719,7 +2741,7 @@ function create_standard_containers() {
     for ((container = 0; container < containers; container++)) ; do
 	cat <<EOF
 - name: "c${container}"
-  imagePullPolicy: $image_pull_policy
+${image_pull_policy:+  imagePullPolicy: $image_pull_policy}
   image: "$image"
 $(indent 2 container_standard_auxiliary_yaml)
 $(indent 2 standard_environment)
@@ -3376,9 +3398,7 @@ metadata:
   name: "${namespace}"
 $(indent 2 standard_labels_yaml $worker_label -t namespace)
 EOF
-	_OC label namespace --overwrite "$namespace" "pod-security.kubernetes.io/enforce=$policy" 2>&1 | report_if_desired
-	_OC label namespace --overwrite "$namespace" "pod-security.kubernetes.io/audit=$policy" 2>&1 | report_if_desired
-	_OC label namespace --overwrite "$namespace" "pod-security.kubernetes.io/warn=$policy" 2>&1 | report_if_desired
+	_OC label namespace --overwrite "$namespace" "pod-security.kubernetes.io/enforce=$policy" "pod-security.kubernetes.io/audit=$policy" "pod-security.kubernetes.io/warn=$policy" 2>&1 | report_if_desired
 	if [[ $policy = privileged ]] ; then
 	    if ! __OC get serviceaccount -n "$namespace" "$namespace" >/dev/null 2>&1 ; then
 		_OC create serviceaccount -n "$namespace" "$namespace" 2>&1 | report_if_desired
@@ -4167,7 +4187,7 @@ function create_container_sync() {
     local initial_expected_clients=$5
     cat <<EOF
 - name: ${namespace}
-  image_pull_policy: $image_pull_policy
+${image_pull_policy:+  imagePullPolicy: $image_pull_policy}
   image: "$container_image"
   ports:
   - containerPort: $port
@@ -4232,7 +4252,7 @@ function create_container_drop_cache() {
     IFS=: read -r sync_service sync_port_num sync_ns_port_num <<< "$(get_sync)"
     cat <<EOF
 - name: ${namespace}-dc
-  image_pull_policy: $image_pull_policy
+${image_pull_policy:+  imagePullPolicy: $image_pull_policy}
   image: "$container_image"
   securityContext:
     privileged: true
@@ -4545,7 +4565,7 @@ function _do_cleanup() {
 	    if [[ $deployment_type = vm ]] ; then
 		__OC delete all -A -l "${basename}-sync" --force --grace-period=0 2>&1 | timestamp 1>&2
 	    fi
-	    __OC delete all -A  -l "$basename" --force --grace-period=0 2>&1 | timestamp 1>&2
+	    __OC delete all -A -l "$basename" --force --grace-period=0 2>&1 | timestamp 1>&2
 	    if ((use_namespaces && remove_namespaces)) ; then
 		__OC delete namespace -l "$basename" --force --grace-period=0 2>&1 | timestamp 1>&2
 	    fi

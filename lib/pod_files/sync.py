@@ -20,6 +20,7 @@ import json
 import os
 import sys
 import signal
+import resource
 from cb_util import cb_util
 
 offset_from_controller = 0
@@ -35,15 +36,23 @@ def kill_nameserver(timebase: cb_util):
         timebase._timestamp(f"Killing nameserver {nameserver_pid}")
         try:
             os.kill(nameserver_pid, 9)
+            time.sleep(1)
+            os.waitpid(nameserver_pid, os.WNOHANG)
         except Exception as exc:
             timebase._timestamp(f"Unable to kill nameserver: {exc}")
+        finally:
+            nameserver_pid = None
     if watchdog_pid:
         timebase._timestamp(f"Killing watchdog {watchdog_pid}")
         try:
             os.kill(watchdog_pid, 9)
-        except Exception:
-            pass
-        timebase._timestamp(f"Killed {watchdog_pid}")
+            time.sleep(1)
+            os.waitpid(watchdog_pid, os.WNOHANG)
+            watchdog_pid = None
+        except Exception as exc:
+            timebase._timestamp(f"Unable to kill watchdog: {exc}")
+        finally:
+            watchdog_pid = None
 
 
 def fatal(string: str):
@@ -326,7 +335,7 @@ def sync_one(sock, tmp_sync_file_base: str, tmp_error_file: str, start_time: flo
     try:
         timebase._listen(sock=sock, backlog=expected_clients)
     except Exception as err:
-        fatal(f"listen failed: {err}")
+        fail_hard(f"listen failed: {err}")
     ts_clients = []
     net_clients = {}
     known_addresses = {}
@@ -342,7 +351,17 @@ def sync_one(sock, tmp_sync_file_base: str, tmp_error_file: str, start_time: flo
     while expected_clients > 0:
         # Reverse hostname lookup adds significant overhead
         # when using sync to establish the timebase.
-        client, address = sock.accept()
+        try:
+            client, address = sock.accept()
+        except OSError as err:
+            for client in ts_clients:
+                timebase._timestamp(f'Accept connection failed: {err}')
+                for client in protected_clients:
+                    try:
+                        client.close()
+                    except Exception as exc:
+                        timebase._timestamp(f"Could not close file descriptor {client}: {exc}")
+            fail_hard(f'Accept connection failed: {err}')
         tbuf = read_token(client)
         if not tbuf:
             timebase._timestamp(f"Read token from {address} failed")
@@ -513,10 +532,17 @@ timebase._set_offset(-offset_from_controller)
 start_time += offset_from_controller
 timebase._timestamp(f"Adjusted timebase by {offset_from_controller} seconds {base_start_time} => {start_time}")
 
+try:
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    resource.setrlimit(resource.RLIMIT_NOFILE, (hard, hard))
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    timebase._timestamp(f"Set file descriptor limit to {soft}, {hard}")
+except (ValueError, OSError) as e:
+    timebase._timestamp(f"Unable to set fd limit: {e}, continuing")
 # Set up nameserver
 try:
     child = os.fork()
-except Exception as exc:
+except (Exception, OSError) as exc:
     fatal(f"Fork failed: {exc}")
 if child == 0:
     timebase._timestamp("About to launch nameserver")
