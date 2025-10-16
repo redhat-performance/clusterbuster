@@ -53,12 +53,15 @@ function register_debug_condition() {
     local condition
     local options
     IFS='=' read -r condition options <<< "$error"
-    debug_conditions["$condition"]=${options:-SET}
-    warn "*** Registering debug condition '$condition' = '${debug_conditions[$condition]}'"
+    local -a conditions=(${condition//,/ })
+    for condition in "${conditions[@]}" ; do
+	debug_conditions["$condition"]=${options:-SET}
+	warn "*** Registering debug condition '$condition' = '${debug_conditions[$condition]}'"
+    done
 }
 
 function debug() {
-    local conditions=${1//,/ }
+    local -a conditions=(${1//,/ })
     local condition
     shift
     for condition in "${conditions[@]}" ; do
