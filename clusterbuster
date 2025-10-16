@@ -1294,7 +1294,7 @@ function _VIRTCTL_BASE() {
 	    else
 		__virtctl_local_ssh=
 	    fi
-	    if virtctl ssh --help < /dev/null 2>&1 |grep -q -e '@vmi?/testvm' ; then
+	    if virtctl ssh --help < /dev/null 2>&1 |grep -q -E -e '@vmi?/testvm' ; then
 		__virtctl_use_type_and_name=1
 	    fi
 	fi
