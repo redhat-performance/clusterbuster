@@ -78,7 +78,6 @@ function server_create_deployment() {
 			   $(seq "$___server_port" $((___server_port + ___server_port_addrs)))
 	fi
 	create_standard_deployment -w server-server -p -c server \
-				   -A "$(create_affinity_yaml "${namespace}-server-client-${instance}")" \
 				   -a server_server_arglist \
 				   ${server_annotation:+-N "$server_annotation"} \
 				   "$namespace" "$instance" "$secret_count" 1 1

@@ -78,7 +78,6 @@ function uperf_create_deployment() {
 			   $(seq "$___uperf_port" $((___uperf_port + ___uperf_port_addrs)))
 	fi
 	create_standard_deployment -w uperf-server -p -c server \
-				   -A "$(create_affinity_yaml "${namespace}-uperf-client-${instance}")" \
 				   -a uperf_server_arglist \
 				   ${server_annotation:+-N "$server_annotation"} \
 				   "$namespace" "$instance" "$secret_count" 1 1
