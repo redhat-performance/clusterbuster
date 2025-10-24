@@ -164,7 +164,7 @@ declare -i scale_deployments=1
 declare -i sync_start=1
 declare -a volumes=()
 declare -A mount_volume_map=()
-declare -r default_common_workdir=/var/opt/clusterbuster
+declare -r default_common_workdir=/var/tmp/clusterbuster
 declare common_workdir=$default_common_workdir
 declare -i report=0
 declare report_format=summary
@@ -556,9 +556,9 @@ $(print_workloads_supporting_reporting '                        - ')
                           - A previously declared mount can be removed by
                             specifying a mount with the same mountpoint
                             and empty name and type.  Example:
-                            --volume=:emptydir:/var/opt/clusterbuster
-                            --volume=::/var/opt/clusterbuster
-                            will result in no mount on /var/opt/clusterbuster
+                            --volume=:emptydir:/var/tmp/clusterbuster
+                            --volume=::/var/tmp/clusterbuster
+                            will result in no mount on /var/tmp/clusterbuster
                             unless later overridden.
                           - All previously declared mounts can be removed
                             by specifying a mount with no name, type,
@@ -1782,7 +1782,10 @@ function run_logger() {
 	exec 2>/dev/null
 	kill -USR2 "${pids_to_kill[@]}"
 	# shellcheck disable=SC2046
-	[[ -n "$(jobs -p)" ]] && kill $(jobs -p)
+	if [[ -n "$(jobs -p)" ]] ; then
+	    kill $(jobs -p)
+	    true
+	fi
     fi
 }
 
@@ -3347,7 +3350,7 @@ function report_if_desired() {
 	else
 	    timestamp
 	fi
-    else
+    elif [[ -z "$*" ]] ; then
 	cat >/dev/null
     fi
 }
@@ -4845,7 +4848,7 @@ function run_clusterbuster_2() {
     set_run_started
 
     do_logging || return 1
-    if ! get_run_failed || ((! status && report_object_creation )) ; then
+    if ((report_object_creation)) && (! get_run_failed || ((! status)) ) ; then
 	report_object_creation
     fi
     return 0

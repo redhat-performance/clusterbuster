@@ -33,7 +33,11 @@ function standard_snapshot_date_format() {
 function timestamp() {
     function _timestamp() {
 	while IFS= read -r 'LINE' ; do
-	    printf "%s %s\n" "$(TZ=GMT-0 date '+%Y-%m-%dT%T.%N' | cut -c1-26)" "$LINE"
+	    if [[ $LINE =~ ^[0-9]{4}(-[0-9]{2}){2}T[0-9]{2}(:[0-9]{2}){2}\.[0-9]{6} ]] ; then
+		echo "$LINE"
+	    else
+		printf "%s %s\n" "$(TZ=GMT-0 date '+%Y-%m-%dT%T.%N' | cut -c1-26)" "$LINE"
+	    fi
 	done
     }
     if (($#)) ; then
