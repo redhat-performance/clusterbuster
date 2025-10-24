@@ -87,7 +87,7 @@ class uperf_client(clusterbuster_pod_client):
                 'test_name': test_name
                 }
             failed = False
-            self._sync_to_controller(self._idname(test_name))
+            self._sync_to_controller(test_name)
             self._timestamp(f"Running test {test_name}")
             with open(testfile, 'r') as f:
                 self._timestamp(f.read())

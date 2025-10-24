@@ -132,7 +132,7 @@ class files_client(clusterbuster_pod_client):
         return ops
 
     def run_one_operation(self, op_name0: str, op_name1: str, op_name2: str, op_func, pid: int, data_start_time: float):
-        self._sync_to_controller(self._idname([pid, f"start {op_name2}"]))
+        self._sync_to_controller(pid, f"start {op_name2}")
         self._drop_cache()
         ucpu, scpu = self._cputimes()
         op_start_time = self._adjusted_time() - data_start_time
@@ -161,7 +161,7 @@ class files_client(clusterbuster_pod_client):
             answer['data_size'] = self.blocksize * self.block_count * answer['total_files']
             answer['data_rate'] = answer['data_size'] / op_elapsed_time_0
         self._timestamp(f'{op_name1} files...')
-        self._sync_to_controller(self._idname([pid, f'end {op_name2}']))
+        self._sync_to_controller(pid, f'end {op_name2}')
         return answer
 
     def runit(self, process: int):

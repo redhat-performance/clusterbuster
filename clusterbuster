@@ -164,7 +164,8 @@ declare -i scale_deployments=1
 declare -i sync_start=1
 declare -a volumes=()
 declare -A mount_volume_map=()
-declare common_workdir=/var/opt/clusterbuster
+declare -r default_common_workdir=/var/opt/clusterbuster
+declare common_workdir=$default_common_workdir
 declare -i report=0
 declare report_format=summary
 declare -i precleanup=1
@@ -1185,6 +1186,25 @@ function generate_environment() {
 
 function requires_drop_cache() {
     call_api -w "$requested_workload" requires_drop_cache
+}
+
+function has_writable_emptydir_workdir() {
+    local volspec
+    local -a args
+    for volspec in "${volumes[@]}" ; do
+	IFS=: read -ra args <<< "$volspec"
+	if [[ ${args[2]} = "$common_workdir" ]] ; then
+	    return 0
+	fi
+    done
+    return 1
+}
+
+function requires_writable_workdir() {
+    [[ -z "$runtime_class" && $common_workdir = "$default_common_workdir" &&
+	   $create_pods_privileged -ne 0 ]] &&
+	call_api -w "$requested_workload" requires_writable_workdir &&
+	! has_writable_emptydir_workdir
 }
 
 function get_sysctls() {
@@ -2988,6 +3008,13 @@ EOF
     if ((use_extra_volumes)) ; then
 	local volspec
 	local -i emptyvolid=0
+	if requires_writable_workdir ; then
+	    name="cbemptydir$((emptyvolid++))"
+	    cat <<EOF
+- name: $name
+  mountPath: "${common_workdir}"
+EOF
+	fi
 	for volspec in "${volumes[@]}" ; do
 	    local -a args
 	    IFS=: read -ra args <<< "$volspec"
@@ -3083,6 +3110,13 @@ function extra_volumes_yaml() {
     local -i emptyvolid=0
     local opt
     local value
+    if requires_writable_workdir ; then
+	name="cbemptydir$((emptyvolid++))"
+	cat <<EOF
+- name: $name
+  emptyDir: {}
+EOF
+    fi
     for volspec in "${volumes[@]}" ; do
 	local -a args
 	IFS=: read -ra args <<< "$volspec"
