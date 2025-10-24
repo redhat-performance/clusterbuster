@@ -20,7 +20,7 @@ class files_client(clusterbuster_pod_client):
             if len(self._args) > 6:
                 self.dir_list = self._args[6:]
             else:
-                self.dir_list = ['/var/opt/clusterbuster']
+                self.dir_list = ['/var/tmp/clusterbuster']
             self.dirs = self._toSize(self._args[0])
             self.files_per_dir = self._toSize(self._args[1])
             self.blocksize = self._toSize(self._args[2])

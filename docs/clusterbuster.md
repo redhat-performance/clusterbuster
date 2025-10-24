@@ -244,7 +244,7 @@ The following APIs are supported:
   Returns true if workload requires that the workdir be writable.
   This is typically required for workloads doing file I/O.  It is
   assumed that if the user specifies a workdir other than the default
-  (/var/opt/clusterbuster) that arrangements will be made such that
+  (/var/tmp/clusterbuster) that arrangements will be made such that
   that directory is writable.
 
 #### Workload Client (Pod) API
@@ -555,10 +555,10 @@ singletons, comma-separated lists, or negations. For example, this
 entry:
 
 ```
-volume:files,fio:!vm=:emptydir:/var/opt/clusterbuster
+volume:files,fio:!vm=:emptydir:/var/tmp/clusterbuster
 ```
 indicates that the `volume` argument
-`:emptydir:/var/opt/clusterbuster` should be used when running the
+`:emptydir:/var/tmp/clusterbuster` should be used when running the
 `files` or `fio` workloads and when the runtime (pod, VM, or Kata) is
 not `VM`.
 
