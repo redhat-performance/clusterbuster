@@ -65,9 +65,9 @@ class memory_client(clusterbuster_pod_client):
         memory_blk *= size
         alloc_time = self._adjusted_time()
         if self.__sync_between_iterations:
-            self._sync_to_controller(self._idname([f'postalloc-{iteration}', f' {runtime:.3f} ',
-                                                   f' {prealloc_time:.3f} ', f' {alloc_time:.3f} ',
-                                                   f' {alloc_time-prealloc_time:.3f} ', self._ts()]))
+            self._sync_to_controller(f'postalloc-{iteration}', f' {runtime:.3f} ',
+                                     f' {prealloc_time:.3f} ', f' {alloc_time:.3f} ',
+                                     f' {alloc_time-prealloc_time:.3f} ', self._ts())
         run_pages = 0
         loops = 0
         extra_pages = 0
@@ -123,8 +123,8 @@ class memory_client(clusterbuster_pod_client):
             signal.pause()
         prefree_time = self._adjusted_time()
         if self.__sync_between_iterations:
-            self._sync_to_controller(self._idname([f'prefree-{iteration}', f' {prefree_time:.3f} ',
-                                                   f' {prefree_time-alloc_time:.3f} ', self._ts()]))
+            self._sync_to_controller(f'prefree-{iteration}', f' {prefree_time:.3f} ',
+                                     f' {prefree_time-alloc_time:.3f} ', self._ts())
         return [run_pages, prealloc_time, alloc_time, run_start_time, prefree_time, loops, extra_pages]
 
     def runone_child(self, fd, *args):
@@ -222,7 +222,7 @@ class memory_client(clusterbuster_pod_client):
         for iteration in range(self.__iterations):
             self._timestamp(f'Iteration {iteration}/{self.__iterations}')
             if self.__sync_between_iterations:
-                self._sync_to_controller(self._idname([f'iteration-{iteration}', self._ts()]))
+                self._sync_to_controller(f'iteration-{iteration}', self._ts())
             run_size = self.randval(self.__memory)
             run_size = self.__stride * int((run_size + self.__stride - 1) / self.__stride)
             run_time = self.randval(self.__iteration_runtime)

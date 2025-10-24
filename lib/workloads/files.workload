@@ -101,7 +101,9 @@ function files_process_options() {
     if (( ___file_block_size <= 0)) ; then
 	___file_block_size=___file_size
     fi
-    [[ -z "${___files_dirs[*]}" ]] && ___files_dirs=(/var/opt/clusterbuster)
+    if [[ -z "${___files_dirs[*]}" ]] ; then
+	___files_dirs=("$common_workdir")
+    fi
 }
 
 function files_requires_drop_cache() {
@@ -122,6 +124,10 @@ function files_report_options() {
 "files_drop_cache": $___files_drop_cache,
 "files_dirs": $(mk_str_list "${___files_dirs[@]}")
 EOF
+}
+
+function files_requires_writable_workdir() {
+    true
 }
 
 register_workload files file

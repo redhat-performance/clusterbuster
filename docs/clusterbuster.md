@@ -236,6 +236,17 @@ The following APIs are supported:
   `vm_required_packages`.  This should not include any sysctls unless
   they are needed on the host.
 
+* `<workload>_requires_drop_cache`
+  Returns true if workload requires use of dropping cache.  This is
+  typicaly required for workloads doing file I/O.
+  
+* `<workload>_requires_writable_workdir`
+  Returns true if workload requires that the workdir be writable.
+  This is typically required for workloads doing file I/O.  It is
+  assumed that if the user specifies a workdir other than the default
+  (/var/opt/clusterbuster) that arrangements will be made such that
+  that directory is writable.
+
 #### Workload Client (Pod) API
 
 The Python3 API for workload pods is provided by
@@ -386,18 +397,19 @@ This currently only documents the most commonly used members.
   `extra` is any additional data, as a dictionary, that the workload
   wants to log.
 
-* `clusterbuster_pod_client._sync_to_controller(self, token: str = None)`
-
-  Synchronize to the controller.  The number of times that the
-  workload needs to synchronize should be computed on the host side;
-  the pod side needs to ensure that it only synchronizes the desired
-  number of times.  If `token` is not provided, one will be generated.
-
-* `clusterbuster_pod_client._idname(self, args: list = None, separator: str = ':')`
+* `clusterbuster_pod_client._idname(self, *args, separator: str = ':')`
 
   Generate an identifier based on namespace, pod name, container name,
   and child index along with any other tokens desired by the workload.
   If a separator is provided, it is used to separate the tokens.
+
+* `clusterbuster_pod_client._sync_to_controller(self, *args, **kwargs)`
+
+  Synchronize to the controller.  The number of times that the
+  workload needs to synchronize should be computed on the host side;
+  the pod side needs to ensure that it only synchronizes the desired
+  number of times.  args and kwargs are passed to
+  `clusterbuster_pod_client._idname()`.
 
 * `clusterbuster_pod_client._podname(self)`
   `clusterbuster_pod_client._container(self)`
@@ -421,9 +433,10 @@ This currently only documents the most commonly used members.
 
 * `clusterbuster_pod_client._resolve_host(self, hostname: str)`
 
-  Resolve a DNS hostname.  This is not normally needed, as
-  `_connect_to` will do what is needed.  This will retry as needed
-  until it succeeds.
+  Resolve a hostname.  This is not normally needed, as `_connect_to`
+  will do what is needed.  This will retry as needed until it
+  succeeds.  `hostname` can be the name of a pod/VM within the
+  workload or an external (DNS) name.
 
 * `clusterbuster_pod_client._toSize(self, arg: str)`
   `clusterbuster_pod_client._toSizes(self, *args)`

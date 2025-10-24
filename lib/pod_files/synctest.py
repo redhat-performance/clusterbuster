@@ -24,7 +24,7 @@ class synctest_client(clusterbuster_pod_client):
         data_start_time = self._adjusted_time()
         for i in range(self.sync_count):
             for j in range(self.sync_cluster_count):
-                self._sync_to_controller(self._idname([i, j]))
+                self._sync_to_controller(i, j)
             if self.sync_sleep > 0:
                 time.sleep(self.sync_sleep)
         user, system = self._cputimes(user, system)

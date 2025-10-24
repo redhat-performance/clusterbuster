@@ -20,7 +20,7 @@
 
 declare -ag ___byo_args=()
 declare -ag ___byo_files=()
-declare -g ___byo_workdir=/var/opt/clusterbuster/cb-work
+declare -g ___byo_workdir="${common_workdir}/cb-work"
 declare -g ___byo_workload=
 declare -g ___byo_name=
 declare -ig ___byo_drop_cache=0
@@ -111,6 +111,10 @@ EOF
 
 function byo_requires_drop_cache() {
     ((___byo_drop_cache))
+}
+
+function byo_requires_writable_workdir() {
+    true
 }
 
 register_workload byo byowl bringyourown

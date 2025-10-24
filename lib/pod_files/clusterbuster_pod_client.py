@@ -271,17 +271,14 @@ class clusterbuster_pod_client(cb_util):
         """
         return self.__namespace
 
-    def _idname(self, args: list = None, separator: str = ':'):
+    def _idname(self, *args, separator: str = ':'):
         """
         Generate an identifier based on namespace, pod, container, process ID, and any other desired values
         :param separator: Separator to be used between components (default ':')
-        :param extra_components: Any extra components to be appended to the id
         :return: Identification string
         """
         components = [self._namespace(), self._podname(), self._container(), str(self.__child_idx)]
-        if args is not None:
-            components = components + [str(c) for c in args]
-        return separator.join(components)
+        return separator.join(components + [str(c) for c in args])
 
     def _report_results(self, data_start_time: float, data_end_time: float,
                         data_elapsed_time: float, user_cpu: float, sys_cpu: float, extra: dict = None):
@@ -333,14 +330,14 @@ class clusterbuster_pod_client(cb_util):
         """
         self.__enable_sync = enable_sync
 
-    def _sync_to_controller(self, token: str = None):
+    def _sync_to_controller(self, *args, **kwargs):
         """
         Perform a sync to the controller
-        :param token: Optional string to use for sync; None to generate one
+        Args are passed to self._idname.
         """
         if self.__enable_sync:
-            self._timestamp(f"do_sync_command {token}")
-            self.__do_sync_command('SYNC', token)
+            self._timestamp(f"do_sync_command {self._idname(*args, *kwargs)}")
+            self.__do_sync_command('SYNC', self._idname(*args, *kwargs))
 
     def _abort(self, msg: str = "Terminating"):
         """
